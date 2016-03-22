@@ -1,7 +1,7 @@
 ## This script will do a Principal Component Analysis over a data set. After that kmeans algorithm will be implemented over the result.
 
 
-## Firts function: do the PCA for the data we provide.
+## 1. Firts function: do the PCA for the data we provide.
 
 pca2kmeans <- function(x){
     data <- as.data.frame(x)
@@ -17,7 +17,7 @@ datakm <- pca2kmeans(x)
 
 ## The data frame resulting from the function is the one we are going to use for the kmeans.
 
-## 2nd function: do the kmeans algorithm n times. Every time will do it for 1:k clusters.
+## 2. 2nd function: do the kmeans algorithm n times. Every time will do it for 1:k clusters.
 
 kmeansexp <- function(x, n, k){
      expkm <- list(1:n)
@@ -33,3 +33,14 @@ kmeansexp <- function(x, n, k){
 }
 
 resultado <- kmeansexp(datakm,n,k) ## you can especify n=number of running times and k=number of clusters
+
+## 3. 3rd function to analyse the correct number of cluters.
+
+CH <- function(x, k){
+    CH_index <- c()
+    for (i in 2:k) CH_index[i] <- ((nrow(x)-i)/(i-1))*(x[[i]]$tot.withinss)/(x[[i]]$betweenss)
+return(CH_index)
+                               }
+
+Indice <- lapply(resultado, FUN='CH')
+Indice <- do.call(cbind, Indice) 
