@@ -5,7 +5,7 @@
 
 pca2kmeans <- function(x){
     data <- as.data.frame(x)
-    datapca <-princomp(data) ## PCA descomopsition
+    datapca <-prcomp(data) ## PCA descomopsition
     ## I SELECT THE NUMBER OF MODES THAT I CONSIDER. 
     cumvar <- cumsum(datapca$sdev^2 / sum(datapca$sdev^2))
     b <- which(cumvar < 0.96 )
