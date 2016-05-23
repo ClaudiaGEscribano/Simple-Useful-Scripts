@@ -6,7 +6,7 @@
 pca2kmeans <- function(x){
     data <- as.data.frame(x)
     datapca <-princomp(data) ## PCA descomopsition
-    ## I SELECT THE NUMBER OF MODES THAT I CONSIDER. It is necessary to include in the function that this selection ewasne depending on a percentage.some conditions. This number (56) would be selected depending on some criteria.
+    ## I SELECT THE NUMBER OF MODES THAT I CONSIDER. 
     cumvar <- cumsum(datapca$sdev^2 / sum(datapca$sdev^2))
     b <- which(cumvar < 0.96 )
     c <- length(b)
@@ -15,9 +15,7 @@ pca2kmeans <- function(x){
 }
 
 
-datakm <- pca2kmeans(x)
-
-## The data frame resulting from the function is the one we are going to use for the kmeans.
+datakm <- pca2kmeans(x) ## The data frame resulting from the function is the one we are going to use for the kmeans.
 
 ## 2. 2nd function: do the kmeans algorithm n times. Every time will do it for 1:k clusters.
 
@@ -34,7 +32,7 @@ kmeansexp <- function(x, n, k){
     return(expkm)
 }
 
-resultado <- kmeansexp(datakm,n,k) ## you can especify n=number of running times and k=number of clusters
+resultado <- kmeansexp(datakm,n,k) ## you can especify n=number of running times and k=number of clusters. In my case I did n=500 and k=70
 
 ## 3. 3rd function to analyse the correct number of cluters.
 
