@@ -6,9 +6,11 @@
 pca2kmeans <- function(x){
     data <- as.data.frame(x)
     datapca <-princomp(data) ## PCA descomopsition
-    ## I SELECT THE NUMBRE OF MODES THAT I CONSIDER. It is necessary to include in the function that this selection ewasne depending on a percentage.some conditions. This number (56) would be selected depending on some criteria.
-
-    datapca2 <- data.frame(datapca$x[,1:56])
+    ## I SELECT THE NUMBER OF MODES THAT I CONSIDER. It is necessary to include in the function that this selection ewasne depending on a percentage.some conditions. This number (56) would be selected depending on some criteria.
+    cumvar <- cumsum(datapca$sdev^2 / sum(datapca$sdev^2))
+    b <- which(cumvar < 0.96 )
+    c <- lebgth(b)
+    datapca2 <- data.frame(datapca$x[,1:c])
     return(datapca2)
 }
 
