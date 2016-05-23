@@ -14,6 +14,7 @@ pca2kmeans <- function(x){
     return(datapca2)
 }
 
+## in case your data has NA -> data[is.na(data)] <- -999
 
 datakm <- pca2kmeans(x) ## The data frame resulting from the function is the one we are going to use for the kmeans.
 
