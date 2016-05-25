@@ -1,5 +1,15 @@
 ## This script will do a Principal Component Analysis over a data set. After that kmeans algorithm will be implemented over the result.
 
+library(raster)
+library(rasterVis)
+library(ncdf4)
+library(maps)
+library(maptools)
+
+## Read the .nc data with raster
+
+my_nc <- stack("my_nc.nc")
+
 
 ## 1. Firts function: do the PCA for the data we provide.
 
@@ -16,7 +26,7 @@ pca2kmeans <- function(x){
 
 ## in case your data has NA -> data[is.na(data)] <- -999
 
-datakm <- pca2kmeans(x) ## The data frame resulting from the function is the one we are going to use for the kmeans.
+datakm <- pca2kmeans(my_nc) ## The data frame resulting from the function is the one we are going to use for the kmeans.
 
 ## 2. 2nd function: do the kmeans algorithm n times. Every time will do it for 1:k clusters.
 
@@ -35,6 +45,8 @@ kmeansexp <- function(x, n, k){
 
 resultado <- kmeansexp(datakm,n,k) ## you can especify n=number of running times and k=number of clusters. In my case I did n=500 and k=70
 
+## resultado has a list with n elements. Yo need to select which one is the one you would like to chose. We use the CH index.
+
 ## 3. 3rd function to analyse the correct number of cluters.
 
 CH <- function(x, k){
@@ -45,3 +57,8 @@ return(CH_index)
 
 Indice <- lapply(resultado, FUN='CH')
 Indice <- do.call(cbind, Indice) 
+
+
+## Once we have applied the index, we take the optimal partition and visualizes it.
+
+
