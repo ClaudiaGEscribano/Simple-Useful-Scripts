@@ -36,7 +36,7 @@ pca2cluster <- function(x) {
     return(datapca2)
 }
 
-datahc <- pca2cluster(SISd1)
+datahc <- pca2cluster(SISd)
 
 #############################################################
 ## 3. Hierarquical clustering
@@ -81,10 +81,58 @@ cluster.centroid <- function(datahc, data, n){ ## n es el numero de clusters max
             )
  }
 
-centroids <- cluster.centroid(kut, dataMatrix, 69)
+
+cluster.centroid <- function(datahc, data, n){ ## n es el numero de clusters max. menos uno.
+     lapply(seq(from=1, to=n),
+            FUN=function(x) lapply(seq(from=1, to=x+1),
+                FUN=function(i){
+                    ind  <- which(datahc[,x]==i) ## cambio aqui  i por x
+                    r <- data[ind,]
+                    c <- colMeans(r)
+                    return(c)
+                })
+            )
+ }
+
+
+
+centroids <- cluster.centroid(kut, dataMatrix, 69) ## contiene una lista de 70 elementos. Cada uno de los elementos es otra lista con los valores de de los centroides, que son vectores de dimensión d igual a las columnas de data.
 
 a <- which(kut[,2] == 3)
 b <- dataMatrix[a,]
-c <- rowMeans(b)
+c <- colMeans(b)
 d <- which(c == sort(c)[length(c)/2])
 e <- a[d]
+
+
+############################################################################################
+## 3. CENTERS MATRIX TO KMEANS
+##########################################################################################
+
+
+centros <- lapply(seq(from=1, to=69),
+                  FUN=function(i) do.call(rbind, centroids[[i]]))
+
+
+kmeansexp <- lapply(centros,
+                    FUN=function(i) kmeans(dataMatrix, centers=i, iter.max=1000)) ## Me da un  warning.
+    
+## Puedo representar cualquiera de los experimentos de kmeanexp
+
+P <- raster(SISd)
+P <- setValues(P, kmeansexp[[6]]$cluster)
+
+levelplot(P)
+
+## Lo que parece es que los centros que se dan ahora están más cerca de los buenos, por lo que el kmeans es mucho más rápido. Aún así, puede aparecer una no convergencia. LO que sería buneo es darle, después de estos centros iniciales, la opción de que pudiera inicializarse de nuevo.
+
+kmeansexp2 <- lapply(kmeansexp,
+                     FUN=function(i) kmeans(dataMatrix, centers=i$centers, iter.max=1))
+
+kmeansexp3 <- lapply(kmeansexp2,
+                     FUN=function(i) kmeans(dataMatrix, centers=i$centers, iter.max=1))
+
+kmeansexp4 <- lapply(kmeansexp3,
+                     FUN=function(i) kmeans(dataMatrix, centers=i$centers, iter.max=100))
+
+## Los centrosque he asignado no varían.
