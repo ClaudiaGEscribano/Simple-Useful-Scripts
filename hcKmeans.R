@@ -154,6 +154,13 @@ tb <- table(P[ad[,2]], P[ad[,3]])
 
 ## Para comparar con el valor del cluster de la celda que estoy analizando:
 
-P[ad[ad[,1] == id, 3]] == P[id]
+P[ad[ad[,1] == 1, 3]] != P[1] ## me dice las que son distintas
 
 ## me da valores TRUE o FALSE
+
+## Lo que quiero saber es el valor de la celda id que tiene vecinos con valor distinto a ella
+
+distintos <- which(P[ad[ad[,1] == 1, 3]] != P[1]) ## me dice cuantos de los vecinos son distintos. En este caso ninguno
+
+if (distintos > length(ad[,1]==id)/2) {
+    P[id] <- ## aquí tengo que asignar el valor del cluster que más se repita en los vecinos 
