@@ -36,7 +36,7 @@ pca2cluster <- function(x) {
     return(datapca2)
 }
 
-datahc <- pca2cluster(SISd)
+datahc <- pca2cluster(SISd1)
 
 #############################################################
 ## 3. Hierarquical clustering
@@ -55,32 +55,6 @@ kut <- cutree(datahclus, k=2:70)
 
 ## I have to select the centroids of the clusters in order to use them in the kmeans clustering.
  
-D <- lapply(seq(from=1, to=69),
-            FUN=function(i) lapply(seq(from=1, to=i+1),
-                FUN=function(x){
-                    ind  <- which(kut[,i]==x)
-                    r <- dataMatrix[ind,]
-                    mr <- rowMeans(r)
-                    mr2 <- which(mr == sort(mr)[length(mr)/2])
-                    where <- ind[mr2]
-                    return(where)
-                })
-            )
-
-cluster.centroid <- function(datahc, data, n){ ## n es el numero de clusters max. menos uno.
-     lapply(seq(from=1, to=n),
-            FUN=function(x) lapply(seq(from=1, to=x+1),
-                FUN=function(i){
-                    ind  <- which(datahc[,x]==i) ## cambio aqui  i por x
-                    r <- data[ind,]
-                    mr <- rowMeans(r)
-                    mr2 <- which(mr == sort(mr)[length(mr)/2])
-                    where <- ind[mr2]
-                    return(where)
-                })
-            )
- }
-
 
 cluster.centroid <- function(datahc, data, n){ ## n es el numero de clusters max. menos uno.
      lapply(seq(from=1, to=n),
@@ -117,22 +91,69 @@ centros <- lapply(seq(from=1, to=69),
 kmeansexp <- lapply(centros,
                     FUN=function(i) kmeans(dataMatrix, centers=i, iter.max=1000)) ## Me da un  warning.
     
-## Puedo representar cualquiera de los experimentos de kmeanexp
+## Puedo representar cualquiera de los experimentos de kmeanexp para explorar como son las particiones.
 
 P <- raster(SISd)
-P <- setValues(P, kmeansexp[[6]]$cluster)
+P <- setValues(P, kmeansexp[[17]]$cluster)
 
 levelplot(P)
 
 ## Lo que parece es que los centros que se dan ahora están más cerca de los buenos, por lo que el kmeans es mucho más rápido. Aún así, puede aparecer una no convergencia. LO que sería buneo es darle, después de estos centros iniciales, la opción de que pudiera inicializarse de nuevo.
 
-kmeansexp2 <- lapply(kmeansexp,
-                     FUN=function(i) kmeans(dataMatrix, centers=i$centers, iter.max=1))
+###################################################################################################
+## 4. OPTIMUN K
+#################################################################################################
 
-kmeansexp3 <- lapply(kmeansexp2,
-                     FUN=function(i) kmeans(dataMatrix, centers=i$centers, iter.max=1))
+## In order to determine the optimun numnber of clusters, I can use several indexes.
 
-kmeansexp4 <- lapply(kmeansexp3,
-                     FUN=function(i) kmeans(dataMatrix, centers=i$centers, iter.max=100))
+library(clusterCrit)
 
-## Los centrosque he asignado no varían.
+load('data_from_PCA_30years.Rdata')
+datakm_matrix <- as.matrix(datahc)
+
+## Davies-Bouldin index
+
+criterioDB <- lapply(seq(from=2, to=70),
+                     FUN=function(x) intCriteria(datakm_matrix, kmeansexp[[x]]$cluster, 'Davies_Bouldin')
+                     )
+
+## Draw the index vs k
+
+critDB_v <- as.vector(criterioDB)
+
+k <- c(2:70)
+matplot(k, critDB_v, type="l", main='DB index', xlab='k', ylab='Davies_Boudin')
+
+##############################################################################################
+## 5. REASIGNAR CELDAS
+########################################################################################
+
+## Tomo para hacer como ejemplo kmeansexp[[20]]$clusters
+
+klus <- P
+ 
+## utilizo el paquete raster con la funcion adjacent para calcular el valor de los vecinos.
+
+neig <- matrix(c(1,1,1,
+                 1,0,1,
+                 1,1,1), ncol=3, byrow=TRUE)
+
+ad <- adjacent(P, 1:ncell(P), directions=8, pairs=TRUE, id=TRUE, sorted=TRUE) ## directions 8 y neig es lo mismo
+
+tb <- table(P[ad[,2]], P[ad[,3]])
+
+## Una vez que obtengo la matriz ad tengo que comparar los valores de mi raster y de los vecinos.
+
+## celdas que corresponden a los vecinos de la celda id:
+
+## ad[ad[,1] == id, 3]
+
+## Me da varios valores, todos los vecinos de la celda id. Salvo para los márgenes, debe haber 8 valores. ¿A qué cluster pertenecen estos vecinos?
+
+## P[ad[ad[,1] == id, 3]]
+
+## Para comparar con el valor del cluster de la celda que estoy analizando:
+
+P[ad[ad[,1] == id, 3]] == P[id]
+
+## me da valores TRUE o FALSE
