@@ -94,7 +94,7 @@ kmeansexp <- lapply(centros,
 ## Puedo representar cualquiera de los experimentos de kmeanexp para explorar como son las particiones.
 
 P <- raster(SISd)
-P <- setValues(P, kmeansexp[[17]]$cluster)
+P <- setValues(P, kmeansexp[[8]]$cluster)
 
 levelplot(P)
 
@@ -140,27 +140,92 @@ neig <- matrix(c(1,1,1,
 
 ad <- adjacent(P, 1:ncell(P), directions=8, pairs=TRUE, id=TRUE, sorted=TRUE) ## directions 8 y neig es lo mismo
 
-tb <- table(P[ad[,2]], P[ad[,3]])
+tb <- table(r[ad[,2]], r[ad[,3]])
 
 ## Una vez que obtengo la matriz ad tengo que comparar los valores de mi raster y de los vecinos.
 
 ## celdas que corresponden a los vecinos de la celda id:
 
-## ad[ad[,1] == id, 3]
+vecinosID <- lapply(seq(1:ncell(P)), FUN= function(x) ad[ad[,1] == x, 3])
 
 ## Me da varios valores, todos los vecinos de la celda id. Salvo para los márgenes, debe haber 8 valores. ¿A qué cluster pertenecen estos vecinos?
 
-## P[ad[ad[,1] == id, 3]]
+vecinosValor <- lapply(seq(1:ncell(P)), FUN= function(x) P[ad[ad[,1] == x, 3]])
 
-## Para comparar con el valor del cluster de la celda que estoy analizando:
+## Para comparar con el valor del cluster de la celda que estoy analizando utilizo una comparación lógica. Cuento cuantos de los vecinos cumplen la condición y en función de eso (if) reasigno. El valor al que reasigno viene dado por el valor más común que tengan los vecinos (utilizo la función table)
 
-P[ad[ad[,1] == 1, 3]] != P[1] ## me dice las que son distintas
+## condicion:
 
-## me da valores TRUE o FALSE
 
-## Lo que quiero saber es el valor de la celda id que tiene vecinos con valor distinto a ella
+p2 <- lapply(vecinosValor,
+             FUN=function(x) if (length(which(x != P[x])) >= 7) {
+                 sort(x, decreasing= TRUE)[1]
+             } else { P[x] }
+       )
 
-distintos <- which(P[ad[ad[,1] == 1, 3]] != P[1]) ## me dice cuantos de los vecinos son distintos. En este caso ninguno
 
-if (distintos > length(ad[,1]==id)/2) {
-    P[id] <- ## aquí tengo que asignar el valor del cluster que más se repita en los vecinos 
+p2 <- lapply(seq(1:ncell(P)),
+                 FUN=function(x) lapply(vecinosValor,
+                     FUN=function(i) if (length(which(i != P[i])) >= 7) { # puede que haya que meter la varaiable x aquí en algún sitio ?¿?
+                         P[x] <- sort(i, decreasing= TRUE)[1]
+             } else { P[x] })
+       )
+
+
+
+p2 <- lapply(seq(1:ncell(P)),
+                 FUN=function(x) lapply(vecinosValor,
+                     FUN=function(i) if (length(which(i != P[i])) >= 7) { # puede que haya que meter la varaiable x aquí en algún sitio ?¿?
+                         P[x] <- sort(i, decreasing= TRUE)[1]
+             } else { P[x] })
+       )
+
+
+
+
+p3 <- raster(P)
+p3 <- setValues(p3, p2)
+
+
+           if length(which(vecinosValor[ID] != r[ID]) >= 7 { r[ID] <- sort(table(vecinosValor[ID]), decreasing= TRUE)[1]
+
+
+if (length(which(r[ad[ad[,1] == ID, 3]] != r[ID])) >= 5) {r[ID] = sort(table(r[ad[ad[,1] == ID ,3]]), decreasing= TRUE)[1]}
+
+
+                                                  
+Reasignar <- function(r){
+    ## calculo los vecinos
+    ad <- adjacent(r, 1:ncell(r), directions=8, pairs=TRUE, id=TRUE, sorted=TRUE)
+    ## hago un bucle para recorrer los vecinos de cada celda y a partir de su valor reasignar o no.
+
+    for (i in 1:ncell(r)){
+        if (length(which(r[ad[ad[,2] == i, 3]] != r[i])) >= 7) {
+            r[i] <- sort(table(r[ad[ad[,2] == i ,3]]), decreasing= TRUE)[1]
+        } 
+    }
+    return(r)
+}
+
+
+Reasignar <- function(r){
+    ## calculo los vecinos
+    ad <- adjacent(r, 1:ncell(r), directions=8, pairs=TRUE, id=TRUE, sorted=TRUE)
+    ## hago un bucle para recorrer los vecinos de cada celda y a partir de su valor reasignar o no.
+
+    for (i in 1:ncell(r)) {
+        if (length(which(r[ad[ad[,2] == i, 3]] != r[i])) >= 7) { 
+            r[i] <- 4}
+        else { r[i]}
+        return(r)
+    }
+    
+}
+
+sort(table(r[ad[ad[,2] == i ,3]]), decreasing= TRUE)[1]
+## por los resultados que obtengo, la identificación está bien pero la asignación no.
+
+r2 <- Reasignar(P)
+
+levelplot(stack(P, r2))
+
