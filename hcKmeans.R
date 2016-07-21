@@ -38,6 +38,8 @@ pca2cluster <- function(x) {
 
 datahc <- pca2cluster(SISd1)
 
+save(datahc, file='datafromPCA.Rdata')
+
 #############################################################
 ## 3. Hierarquical clustering
 #############################################################
@@ -72,11 +74,9 @@ cluster.centroid <- function(datahc, data, n){ ## n es el numero de clusters max
 
 centroids <- cluster.centroid(kut, dataMatrix, 69) ## contiene una lista de 70 elementos. Cada uno de los elementos es otra lista con los valores de de los centroides, que son vectores de dimensión d igual a las columnas de data.
 
-a <- which(kut[,2] == 3)
-b <- dataMatrix[a,]
-c <- colMeans(b)
-d <- which(c == sort(c)[length(c)/2])
-e <- a[d]
+## saving centroids, just if you need to check
+
+save(centroids, file='centroidshc.Rdata')
 
 
 ############################################################################################
@@ -94,7 +94,7 @@ kmeansexp <- lapply(centros,
 ## Puedo representar cualquiera de los experimentos de kmeanexp para explorar como son las particiones.
 
 P <- raster(SISd)
-P <- setValues(P, kmeansexp[[8]]$cluster)
+P <- setValues(P, kmeansexp[[10]]$cluster)
 
 levelplot(P)
 
@@ -117,12 +117,49 @@ criterioDB <- lapply(seq(from=2, to=70),
                      FUN=function(x) intCriteria(datakm_matrix, kmeansexp[[x]]$cluster, 'Davies_Bouldin')
                      )
 
+criterioCH <- lapply(seq(from=2, to=70),
+                     FUN=function(x) intCriteria(datakm_matrix, kmeansexp[[x]]$cluster, 'Calinski_Harabasz')
+                     )
+
+save(criterioDB, file='criterioDBresult')
+save(criterioCH, file='criterioCHresult')
+
 ## Draw the index vs k
 
-critDB_v <- as.vector(criterioDB)
+## critDB_v <- as.vector(criterioDB)
 
-k <- c(2:70)
-matplot(k, critDB_v, type="l", main='DB index', xlab='k', ylab='Davies_Boudin')
+## k <- c(2:70)
+## matplot(k, critDB_v, type="l", main='DB index', xlab='k', ylab='Davies_Boudin')
+
+## L- method after the index crit. ¡¡AQUÍ!! LA FUNCIÓN AJUSTE ESTÁ PREPARADA PARA LA SALIDA DEL ANTERIOR ÍNDICE CH. TENGO QUE PREPARALA PARA LA SALIDA ACTUAL.
+
+rmse <- list()
+
+ajuste <- function(x){ ## ajusta a 2 rectas los puntos de la gráfica CH y DB vs k.
+            for(j in 1:67){
+        r1L <- lm(x[1:j+1]~c(1:j+1))
+        r1R <- lm(x[j+2:70]~c(j+2:70))
+    rmse[[j]] <- c(sqrt(sum((r1L$residuals)^2)), sqrt(sum((r1R$residuals)^2)))}
+    return(rmse)
+}
+
+
+## I apply this 'ajuste' function' to the criterio lists. 
+
+rmse_Exp <- lapply(criterioCH, FUN='ajuste')
+
+## Ponderate the rmse from lm results.
+
+ajustePond <- function(x){ ## Calculating the total error.
+    rmseT <- c()
+        for(i in 1:67)
+    rmseT[i] <-((i+1)-1)/((70)-1)*(x[[i]][1])+(70-(i+1))/(70-1)*(x[[i]][2])
+    return(rmseT)
+}
+
+
+rmse_ExpP <- lapply(rmse_Exp, FUN='ajustePond')
+
 
 ##############################################################################################
 ## 5. REASIGNAR CELDAS
@@ -154,78 +191,17 @@ vecinosValor <- lapply(seq(1:ncell(P)), FUN= function(x) P[ad[ad[,1] == x, 3]])
 
 ## Para comparar con el valor del cluster de la celda que estoy analizando utilizo una comparación lógica. Cuento cuantos de los vecinos cumplen la condición y en función de eso (if) reasigno. El valor al que reasigno viene dado por el valor más común que tengan los vecinos (utilizo la función table)
 
-## condicion:
 
-
-p2 <- lapply(vecinosValor,
+Reasignar <- lapply(vecinosValor,
              FUN=function(x) if (length(which(x != P[x])) >= 7) {
                  sort(x, decreasing= TRUE)[1]
              } else { P[x] }
        )
 
 
-p2 <- lapply(seq(1:ncell(P)),
-                 FUN=function(x) lapply(vecinosValor,
-                     FUN=function(i) if (length(which(i != P[i])) >= 7) { # puede que haya que meter la varaiable x aquí en algún sitio ?¿?
-                         P[x] <- sort(i, decreasing= TRUE)[1]
-             } else { P[x] })
-       )
+## Save the cluster partition with the hc+kmeans method
 
+R <- raster(P)
+R <- setValues(R, unlist(Reasignar))
 
-
-p2 <- lapply(seq(1:ncell(P)),
-                 FUN=function(x) lapply(vecinosValor,
-                     FUN=function(i) if (length(which(i != P[i])) >= 7) { # puede que haya que meter la varaiable x aquí en algún sitio ?¿?
-                         P[x] <- sort(i, decreasing= TRUE)[1]
-             } else { P[x] })
-       )
-
-
-
-
-p3 <- raster(P)
-p3 <- setValues(p3, p2)
-
-
-           if length(which(vecinosValor[ID] != r[ID]) >= 7 { r[ID] <- sort(table(vecinosValor[ID]), decreasing= TRUE)[1]
-
-
-if (length(which(r[ad[ad[,1] == ID, 3]] != r[ID])) >= 5) {r[ID] = sort(table(r[ad[ad[,1] == ID ,3]]), decreasing= TRUE)[1]}
-
-
-                                                  
-Reasignar <- function(r){
-    ## calculo los vecinos
-    ad <- adjacent(r, 1:ncell(r), directions=8, pairs=TRUE, id=TRUE, sorted=TRUE)
-    ## hago un bucle para recorrer los vecinos de cada celda y a partir de su valor reasignar o no.
-
-    for (i in 1:ncell(r)){
-        if (length(which(r[ad[ad[,2] == i, 3]] != r[i])) >= 7) {
-            r[i] <- sort(table(r[ad[ad[,2] == i ,3]]), decreasing= TRUE)[1]
-        } 
-    }
-    return(r)
-}
-
-
-Reasignar <- function(r){
-    ## calculo los vecinos
-    ad <- adjacent(r, 1:ncell(r), directions=8, pairs=TRUE, id=TRUE, sorted=TRUE)
-    ## hago un bucle para recorrer los vecinos de cada celda y a partir de su valor reasignar o no.
-
-    for (i in 1:ncell(r)) {
-        if (length(which(r[ad[ad[,2] == i, 3]] != r[i])) >= 7) { 
-            r[i] <- 4}
-        else { r[i]}
-        return(r)
-    }
-    
-}
-
-sort(table(r[ad[ad[,2] == i ,3]]), decreasing= TRUE)[1]
-## por los resultados que obtengo, la identificación está bien pero la asignación no.
-
-r2 <- Reasignar(P)
-
-levelplot(stack(P, r2))
-
+writeRaster(R, filename='hckmeanspartition.grd')
