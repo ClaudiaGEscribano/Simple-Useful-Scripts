@@ -43,12 +43,14 @@ datakm <- pca2kmeans(my_nc) ## The data frame resulting from the function is the
 
 kmeansexp <- function(x, n, k){
     km <- lapply(seq(1:k),
-                 FUN=function(i) kmeans(x, i, nstart=n, iter.max=30))
+                 FUN=function(i) kmeans(x, i, nstart=n, iter.max=3000))
     return(km)
     }
 
 
 resultado <- kmeansexp(datakm,100,70) ## you can especify n=number of running times and k=number of clusters. In my case I did n=500 and k=70
+
+save(kmeansexp, file='kmeansexp.Rdata')
 
 ## resultado has a list with n elements. Yo need to select which one is the one you would like to chose. We use vlidity index for that purpose.
 
@@ -61,7 +63,7 @@ resultado <- kmeansexp(datakm,100,70) ## you can especify n=number of running ti
 ##    CH_index <- c()
 ##    for (i in 2:k) CH_index[i] <- ((nrow(x)-i)/(i-1))*(x[[i]]$tot.withinss)/(x[[i]]$betweenss)
 ## return(CH_index)
-                               }
+                               
 
 ##Indice <- lapply(resultado, FUN='CH')
 ##Indice <- do.call(cbind, Indice) 
