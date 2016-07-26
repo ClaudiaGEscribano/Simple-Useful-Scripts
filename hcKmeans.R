@@ -108,7 +108,7 @@ levelplot(P)
 
 library(clusterCrit)
 
-load('data_from_PCA_30years.Rdata')
+load('datafromPCA.Rdata')
 datakm_matrix <- as.matrix(datahc)
 
 ## Davies-Bouldin index
@@ -176,7 +176,6 @@ neig <- matrix(c(1,1,1,
                  1,1,1), ncol=3, byrow=TRUE)
 
 ad <- adjacent(P, 1:ncell(P), directions=8, pairs=TRUE, id=TRUE, sorted=TRUE) ## directions 8 y neig es lo mismo
-
 tb <- table(r[ad[,2]], r[ad[,3]])
 
 ## Una vez que obtengo la matriz ad tengo que comparar los valores de mi raster y de los vecinos.
