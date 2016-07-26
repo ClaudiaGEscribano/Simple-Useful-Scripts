@@ -133,8 +133,8 @@ ajuste <- function(x){ ## ajusta a 2 rectas los puntos de la gráfica CH y DB vs
 
 ## I apply this 'ajuste' function' to the criterio lists. 
 
-rmse_expCH <- ajuste(criterioCH)
-rmse_expDB <- ajuste(criterioDB)
+rmse_expCH <- ajuste(as.vector(unlist(criterioCH)))
+rmse_expDB <- ajuste(as.vector(unlist(criterioDB)))
 
 ## Ponderate the rmse from lm results.
 
@@ -146,11 +146,11 @@ ajuste_ponderado <- function(x){ ## Calculating the total error.
 }
 
 
-rmse_expPCH <- lapply(rmse_expCH, FUN='ajuste_ponderado')
-rmse_expPDB <- lapply(rmse_expDB, FUN='ajuste_ponderado')
+rmse_expPCH <- ajuste_ponderado(rmse_expCH)
+rmse_expPDB <- ajuste_ponderado(rmse_expDB)
 
-minimoCH <- which(min(rmse_expPCH)) ## Este mínimo es el que utilizo para determinar la partición óptima
-minimoDB <- which(min(rmse_expPDB))
+minimoCH <- which(rmse_expPCH == min(rmse_expPCH)) ## Este mínimo es el que utilizo para determinar la partición óptima
+minimoDB <- which(rmse_expPDB == min(rmse_expPDB))
 
 ##############################################################################################
 ## 5. REASIGNAR CELDAS
