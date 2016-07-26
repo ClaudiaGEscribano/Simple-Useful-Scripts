@@ -91,15 +91,7 @@ centros <- lapply(seq(from=1, to=69),
 kmeansexp <- lapply(centros,
                     FUN=function(i) kmeans(dataMatrix, centers=i, iter.max=1000)) ## Me da un  warning.
     
-## Puedo representar cualquiera de los experimentos de kmeanexp para explorar como son las particiones.
-
-P <- raster(SISd)
-P <- setValues(P, kmeansexp[[10]]$cluster)
-
-levelplot(P)
-
-## Lo que parece es que los centros que se dan ahora están más cerca de los buenos, por lo que el kmeans es mucho más rápido. Aún así, puede aparecer una no convergencia. LO que sería buneo es darle, después de estos centros iniciales, la opción de que pudiera inicializarse de nuevo.
-
+ 
 ###################################################################################################
 ## 4. OPTIMUN K
 #################################################################################################
@@ -124,14 +116,9 @@ criterioCH <- lapply(seq(from=2, to=70),
 save(criterioDB, file='criterioDBresult')
 save(criterioCH, file='criterioCHresult')
 
-## Draw the index vs k
-
-## critDB_v <- as.vector(criterioDB)
-
-## k <- c(2:70)
-## matplot(k, critDB_v, type="l", main='DB index', xlab='k', ylab='Davies_Boudin')
-
-## L- method after the index crit. ¡¡AQUÍ!! LA FUNCIÓN AJUSTE ESTÁ PREPARADA PARA LA SALIDA DEL ANTERIOR ÍNDICE CH. TENGO QUE PREPARALA PARA LA SALIDA ACTUAL.
+## INDEX vs K. AJUSTE
+ 
+## L- method after the index crit. 
 
 rmse <- list()
 
@@ -146,11 +133,12 @@ ajuste <- function(x){ ## ajusta a 2 rectas los puntos de la gráfica CH y DB vs
 
 ## I apply this 'ajuste' function' to the criterio lists. 
 
-rmse_Exp <- lapply(criterioCH, FUN='ajuste')
+rmse_expCH <- ajuste(criterioCH)
+rmse_expDB <- ajuste(criterioDB)
 
 ## Ponderate the rmse from lm results.
 
-ajustePond <- function(x){ ## Calculating the total error.
+ajuste_ponderado <- function(x){ ## Calculating the total error.
     rmseT <- c()
         for(i in 1:67)
     rmseT[i] <-((i+1)-1)/((70)-1)*(x[[i]][1])+(70-(i+1))/(70-1)*(x[[i]][2])
@@ -158,12 +146,23 @@ ajustePond <- function(x){ ## Calculating the total error.
 }
 
 
-rmse_ExpP <- lapply(rmse_Exp, FUN='ajustePond')
+rmse_expPCH <- lapply(rmse_expCH, FUN='ajuste_ponderado')
+rmse_expPDB <- lapply(rmse_expDB, FUN='ajuste_ponderado')
 
+minimoCH <- which(min(rmse_expPCH)) ## Este mínimo es el que utilizo para determinar la partición óptima
+minimoDB <- which(min(rmse_expPDB))
 
 ##############################################################################################
 ## 5. REASIGNAR CELDAS
 ########################################################################################
+
+## La partición óptima la pongo en un raster
+
+
+P <- raster(SISd)
+P <- setValues(P, kmeansexp[[mínimo]]$cluster)
+
+levelplot(P)
 
 ## Tomo para hacer como ejemplo kmeansexp[[20]]$clusters
 
