@@ -190,11 +190,10 @@ vecinosValor <- lapply(seq(1:ncell(P)), FUN= function(x) P[ad[ad[,1] == x, 3]])
 ## Para comparar con el valor del cluster de la celda que estoy analizando utilizo una comparación lógica. Cuento cuantos de los vecinos cumplen la condición y en función de eso (if) reasigno. El valor al que reasigno viene dado por el valor más común que tengan los vecinos (utilizo la función table)
 
 
-Reasignar <- lapply(vecinosValor,
-             FUN=function(x) if (length(which(x != P[x])) >= 7) {
-                 sort(x, decreasing= TRUE)[1]
-             } else { P[x] }
-       )
+Reasignar <- lapply(seq(1:ncell(P)),
+                    FUN=function(x) if (length(which(vecinosValor[[x]] != P[x])) >= 7) {
+                 P[x] <- sort(vecinosValor[[x]], decreasing= TRUE)[1]
+             } else { P[x] })
 
 
 ## Save the cluster partition with the hc+kmeans method
